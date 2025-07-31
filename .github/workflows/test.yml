@@ -1,0 +1,29 @@
+on: [push, pull_request]
+name: Test
+jobs:
+  staticcheck:
+    name: lint
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    - name: Install Go
+      uses: actions/setup-go@v5
+      with:
+        go-version-file: go.mod
+    - name: staticcheck
+      uses: dominikh/staticcheck-action@v1
+      with:
+        version: latest
+  test:
+    name: test
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    - name: Install Go
+      uses: actions/setup-go@v5
+      with:
+        go-version-file: go.mod
+    - name: Test
+      run: go test -v ./...
