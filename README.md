@@ -64,7 +64,9 @@ You should write a controller program that runs that elevator and:
 
 ## Installing
 
-To install droopy, run
+You can get droopy from the [GitHub Release Section](https://github.com/353solutions/droopy/releases).
+
+Alternatively, you can install droopy with
 
 ```
 go install github.com/353solutions/droopy@latest
