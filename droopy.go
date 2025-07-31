@@ -3,10 +3,14 @@ package main
 import (
 	"bufio"
 	"bytes"
+	_ "embed"
+	"flag"
 	"fmt"
 	"net"
 	"os"
 	"os/signal"
+	"path"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -378,12 +382,11 @@ func (e *Elevator) String() string {
 	return buf.String()
 }
 
-const SimAddr = ":10000"
-
-func debug(format string, args ...interface{}) {
+func debug(format string, args ...any) {
 	if os.Getenv("DEBUG") == "" {
 		return
 	}
+
 	fmt.Printf(format, args...)
 }
 
@@ -394,10 +397,60 @@ func sigHandler(ch chan<- Message) {
 	ch <- Message{"signal", "QUIT"}
 }
 
+var (
+	version     = "0.1.0"
+	showVersion bool
+	simAddr     = ":10000"
+
+	//go:embed help.txt
+	help string
+)
+
+func validateAddr(addr string) error {
+	i := strings.Index(addr, ":")
+	if i == -1 {
+		return fmt.Errorf("%q: missing ':'", addr)
+	}
+
+	port, err := strconv.Atoi(addr[i+1:])
+	if err != nil {
+		return fmt.Errorf("%q: bad port - %w", addr, err)
+	}
+
+	if port < 0 || port > 65_535 {
+		return fmt.Errorf("%q: bad port number", addr)
+	}
+
+	return nil
+}
+
 func main() {
+	flag.BoolVar(&showVersion, "version", false, "show version and exit")
+	flag.StringVar(&simAddr, "addr", simAddr, "simulator address")
+	flag.Usage = func() {
+		fmt.Fprintf(os.Stderr, "usage: %s [options]\n", path.Base(os.Args[0]))
+		fmt.Println("Options:")
+		flag.PrintDefaults()
+		fmt.Println()
+		fmt.Println(help)
+	}
+	flag.Parse()
+
+	if showVersion {
+		fmt.Printf("%s version %s\n", path.Base(os.Args[0]), version)
+		os.Exit(0)
+	}
+
+	if err := validateAddr(simAddr); err != nil {
+		fmt.Fprintf(os.Stderr, "error: %s\n", err)
+		os.Exit(1)
+	}
+
+	debug("address: %s\n", simAddr)
+
 	ch := make(chan Message)
 
-	go sockListener(SimAddr, ch)
+	go sockListener(simAddr, ch)
 	go stdinListener(ch)
 	go sigHandler(ch)
 	go ticker(ch)

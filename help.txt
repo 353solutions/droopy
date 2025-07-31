@@ -1,9 +1,5 @@
-# droopy - An Elevator Simulator
-
-![](droopy.png)
-
 Droopy is an elevator simulator used in various workshops.
-It's based on [lifty][lifty] by the amazing David Beazley. 
+It's based on lifty by the amazing David Beazley. 
 
 Droopy resides in a 4-floor building. It has the following hardware:
 - A door that can open and close
@@ -23,12 +19,10 @@ it'll notify the controller via TCP socket on that a button was pressed.
 The controller can send command telling Droopy what to do.
 
 
-```
           +------+  --- event ---> +----------+
 Jane ---> |Droopy|                 |Controller| 
           +------+  <-- command -- +----------+
    button                 TCP
-```
 
 
 Events from Droopy to the controller:
@@ -56,19 +50,3 @@ Command from the controller to Droopy:
 If the controller sends Droopy an unsafe state (say open door when moving),
 Droopy moves into a crashed state and stop responding to any commands.
 You can reset Droopy by entering the "R" (reset) command.
-
-
-You should write a controller program that runs that elevator and:
-1. Works like an actual elevator
-2. Never crashes the elevator
-
-## Installing
-
-To install droopy, run
-
-```
-go install github.com/353solutions/droopy@latest
-```
-
-
-[lifty]: https://github.com/dabeaz/lifty
