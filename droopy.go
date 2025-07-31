@@ -394,7 +394,7 @@ func sigHandler(ch chan<- Message) {
 	sch := make(chan os.Signal, 1)
 	signal.Notify(sch, os.Interrupt)
 	<-sch
-	ch <- Message{"signal", "QUIT"}
+	ch <- Message{"signal", "Q"}
 }
 
 var (
@@ -466,7 +466,7 @@ func main() {
 			debug("%-5s: %s\n", msg.Origin, msg.Payload)
 		}
 
-		if msg.Payload == "EOF" || msg.Payload == "QUIT" {
+		if msg.Payload == "EOF" || msg.Payload == "Q" {
 			return
 		}
 
