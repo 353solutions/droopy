@@ -327,6 +327,9 @@ func (e *Elevator) Handle(cmd string) string {
 				return fmt.Sprintf("A%d", floor)
 			}
 		}
+	default:
+		e.crashed = true
+		return fmt.Sprintf("crash: unknown command - %q", cmd)
 	}
 
 	return ""
