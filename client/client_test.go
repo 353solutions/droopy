@@ -82,7 +82,7 @@ func TestClient(t *testing.T) {
 		t.Fatalf("failed to send motor up: %v", err)
 	}
 
-	evt, err := c.Receive()
+	evt, err := c.Recv()
 	if err != nil {
 		t.Fatalf("failed to receive approaching event: %v", err)
 	}
@@ -95,7 +95,7 @@ func TestClient(t *testing.T) {
 	}
 
 	// Receive stopped event (S2 - stopped at floor 2)
-	evt, err = c.Receive()
+	evt, err = c.Recv()
 	if err != nil {
 		t.Fatalf("failed to receive stopped event: %v", err)
 	}

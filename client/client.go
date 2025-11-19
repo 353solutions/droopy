@@ -28,7 +28,7 @@ func (c *Client) Send(cmd string) error {
 	return err
 }
 
-func (c *Client) Receive() (string, error) {
+func (c *Client) Recv() (string, error) {
 	if !c.scan.Scan() {
 		if err := c.scan.Err(); err != nil {
 			return "", err
