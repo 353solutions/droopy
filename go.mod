@@ -1,6 +1,6 @@
 module github.com/353solutions/droopy
 
-go 1.25
+go 1.23
 
 tool (
 	github.com/caarlos0/svu
