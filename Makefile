@@ -6,12 +6,12 @@ test:
 	go test -v ./...
 
 release-patch: clean-git
-	git tag v$(shell svu patch)
+	git tag $(shell svu patch)
 	git push
 	git push --tags
 
 release-minor: clean-git
-	git tag v$(shell svu minor)
+	git tag $(shell svu minor)
 	git push
 	git push --tags
 
