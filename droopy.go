@@ -478,7 +478,12 @@ func main() {
 		}
 
 		var evt string
-		if msg.Payload != "" { // Ignore user hitting Enter
+		switch msg.Payload {
+		case "":
+			// Ignore user hitting Enter
+		case "H":
+			fmt.Println(help)
+		default:
 			evt = e.Handle(msg.Payload)
 			if evt != "" && !strings.HasPrefix(evt, "crash:") {
 				debug("event: %s\n", evt)
@@ -487,7 +492,7 @@ func main() {
 		}
 
 		state := e.String()
-		if state != lastState || msg.Payload == "" { // Empty message -> user hit Enter
+		if state != lastState || msg.Payload == "" || msg.Payload == "H" { // Empty message -> user hit Enter
 			if msg.Origin != "stdin" || msg.Origin == "ctrl" {
 				fmt.Println()
 			}
