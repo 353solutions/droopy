@@ -27,3 +27,6 @@ snapshot:
 
 clean-git:
 	git diff --quiet
+
+run:
+	go run ./cmd/droopy/
