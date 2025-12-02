@@ -6,18 +6,12 @@ test:
 	go test -v ./...
 
 release-patch:
-	$(shell svu --strip-prefix patch > version.txt)
-	git add version.txt
-	git commit -m 'bump version' version.txt
-	git tag v$(shell cat version.txt)
+	git tag v$(shell svu patch)
 	git push
 	git push --tags
 
 release-minor:
-	$(shell svu --strip-prefix minor > version.txt)
-	git add version.txt
-	git commit -m 'bump version' version.txt
-	git tag v$(shell cat version.txt)
+	git tag v$(shell svu minor)
 	git push
 	git push --tags
 
