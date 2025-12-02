@@ -1,4 +1,4 @@
-package client
+package droopy
 
 import (
 	"fmt"
@@ -29,8 +29,7 @@ func startElevator(t *testing.T, addr string) {
 	tmpDir := t.TempDir()
 	binPath := filepath.Join(tmpDir, "droopy")
 
-	buildCmd := exec.Command("go", "build", "-o", binPath)
-	buildCmd.Dir = ".."
+	buildCmd := exec.Command("go", "build", "-o", binPath, "./cmd/droopy")
 	if out, err := buildCmd.CombinedOutput(); err != nil {
 		t.Fatalf("failed to build droopy: %v\n%s", err, out)
 	}

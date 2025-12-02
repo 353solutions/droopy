@@ -9,7 +9,10 @@
 version: 2
 
 builds:
-  - env:
+  - id: droopy
+    main: ./cmd/droopy/main.go
+    binary: droopy
+    env:
       - CGO_ENABLED=0
     goos:
       - linux

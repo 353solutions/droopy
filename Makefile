@@ -26,4 +26,7 @@ install-tools:
 	go install honnef.co/go/tools/cmd/staticcheck@latest
 
 ci: install-tools test
-	
+
+snapshot:
+	rm -rf dist
+	goreleaser release --snapshot --clean

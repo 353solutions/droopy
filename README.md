@@ -70,7 +70,7 @@ You can get droopy from the [GitHub Release Section](https://github.com/353solut
 Alternatively, you can install droopy with
 
 ```
-go install github.com/353solutions/droopy@latest
+go install github.com/353solutions/droopy/cmd/droopy@latest
 ```
 
 

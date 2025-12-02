@@ -401,8 +401,7 @@ func sigHandler(ch chan<- Message) {
 }
 
 var (
-	//go:embed version.txt
-	version     string
+	version     string // filled by goreleaser
 	showVersion bool
 	simAddr     = ":10000"
 
