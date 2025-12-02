@@ -5,12 +5,12 @@ test:
 	$(shell go env GOPATH)/bin/staticcheck ./...
 	go test -v ./...
 
-release-patch:
+release-patch: clean-git
 	git tag v$(shell svu patch)
 	git push
 	git push --tags
 
-release-minor:
+release-minor: clean-git
 	git tag v$(shell svu minor)
 	git push
 	git push --tags
@@ -24,3 +24,6 @@ ci: install-tools test
 snapshot:
 	rm -rf dist
 	goreleaser release --snapshot --clean
+
+clean-git:
+	git diff --quiet
