@@ -401,7 +401,7 @@ func sigHandler(ch chan<- Message) {
 }
 
 var (
-	version     string // filled by goreleaser
+	version     string = "<dev>" // filled by goreleaser
 	showVersion bool
 	simAddr     = ":10000"
 
@@ -482,6 +482,8 @@ func main() {
 			// Ignore user hitting Enter
 		case "H":
 			fmt.Println(help)
+		case "Q":
+			os.Exit(0)
 		default:
 			evt = e.Handle(msg.Payload)
 			if evt != "" && !strings.HasPrefix(evt, "crash:") {

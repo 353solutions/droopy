@@ -47,6 +47,7 @@ Command from the controller to Droopy:
 - CDn: Clear down button n
 - R: Reset
 - H: Print this help
+- Q: Quit
 
 If the controller sends Droopy an unsafe state (say open door when moving),
 Droopy moves into a crashed state and stop responding to any commands.
