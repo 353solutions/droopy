@@ -234,7 +234,7 @@ func nextFloor(floor int, motor MotorState) int {
 }
 
 func cmdFloor(cmd string) int {
-	return int(cmd[1] - '0')
+	return int(cmd[len(cmd)-1] - '0')
 }
 
 // Handle handles a command, returns an event to report (empty string if no event).
@@ -253,11 +253,20 @@ func (e *Elevator) Handle(cmd string) string {
 	case "P1", "P2", "P3", "P4":
 		e.panel[cmdFloor(cmd)] = true
 		return cmd
+	case "CP1", "CP2", "CP3", "CP4":
+		e.panel[cmdFloor(cmd)] = false
+		return cmd
 	case "U1", "U2", "U3":
 		e.up[cmdFloor(cmd)] = true
 		return cmd
+	case "CU1", "CU2", "CU3":
+		e.up[cmdFloor(cmd)] = false
+		return cmd
 	case "D2", "D3", "D4":
 		e.down[cmdFloor(cmd)] = true
+		return cmd
+	case "CD2", "CD3", "CD4":
+		e.down[cmdFloor(cmd)] = false
 		return cmd
 	case "DO":
 		return e.setDoor(DoorOpening)

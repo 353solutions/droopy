@@ -147,6 +147,54 @@ func TestElevator_HandleStop(t *testing.T) {
 	}
 }
 
+func TestElevator_HandleClearButton(t *testing.T) {
+	var e Elevator
+
+	var cases = []struct {
+		setCmd   string
+		clearCmd string
+		buttons  []bool
+	}{
+		{"P1", "CP1", e.panel[:]},
+		{"P2", "CP2", e.panel[:]},
+		{"P3", "CP3", e.panel[:]},
+		{"P4", "CP4", e.panel[:]},
+		{"U1", "CU1", e.up[:]},
+		{"U2", "CU2", e.up[:]},
+		{"U3", "CU3", e.up[:]},
+		{"D2", "CD2", e.down[:]},
+		{"D3", "CD3", e.down[:]},
+		{"D4", "CD4", e.down[:]},
+	}
+
+	for _, c := range cases {
+		t.Run(c.clearCmd, func(t *testing.T) {
+			e.Reset()
+
+			// Set button
+			msg := e.Handle(c.setCmd)
+			if msg != c.setCmd {
+				t.Fatalf("set: expected %q, got %q", c.setCmd, msg)
+			}
+
+			floor := cmdFloor(c.setCmd)
+			if c.buttons[floor] != true {
+				t.Fatalf("after set: button %d should be true", floor)
+			}
+
+			// Clear button
+			msg = e.Handle(c.clearCmd)
+			if msg != c.clearCmd {
+				t.Fatalf("clear: expected %q, got %q", c.clearCmd, msg)
+			}
+
+			if c.buttons[floor] != false {
+				t.Fatalf("after clear: button %d should be false", floor)
+			}
+		})
+	}
+}
+
 func TestElevator_HandleTick(t *testing.T) {
 	t.Skip("TODO")
 }

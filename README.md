@@ -59,7 +59,6 @@ If the controller sends Droopy an unsafe state (say open door when moving),
 Droopy moves into a crashed state and stop responding to any commands.
 You can reset Droopy by entering the "R" (reset) command.
 
-
 You should write a controller program that runs that elevator and:
 1. Works like an actual elevator
 2. Never crashes the elevator
@@ -73,6 +72,5 @@ Alternatively, you can install droopy with
 ```
 go install github.com/353solutions/droopy/cmd/droopy@latest
 ```
-
 
 [lifty]: https://github.com/dabeaz/lifty
