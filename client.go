@@ -31,7 +31,7 @@ func (c *Client) Send(cmd string) error {
 	return err
 }
 
-// Recv receives an event from the simulator, blocking until there's on.
+// Recv receives an event from the simulator, blocking until there's one.
 func (c *Client) Recv() (string, error) {
 	if !c.scan.Scan() {
 		if err := c.scan.Err(); err != nil {
