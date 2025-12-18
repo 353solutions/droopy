@@ -30,3 +30,6 @@ clean-git:
 
 run:
 	go run ./cmd/droopy/
+
+build:
+	go build -ldflags="-X main.version=$(shell git tag | tail -1)" ./cmd/droopy
