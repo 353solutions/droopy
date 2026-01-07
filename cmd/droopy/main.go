@@ -4,8 +4,10 @@ import (
 	"bufio"
 	"bytes"
 	_ "embed"
+	"errors"
 	"flag"
 	"fmt"
+	"io"
 	"net"
 	"os"
 	"os/signal"
@@ -57,7 +59,7 @@ func handler(conn net.Conn, ch chan<- Message) {
 		ch <- Message{"ctrl", s.Text()}
 	}
 
-	if err := s.Err(); err != nil {
+	if err := s.Err(); err != nil && !errors.Is(err, io.EOF) {
 		panic(err)
 	}
 
