@@ -507,7 +507,7 @@ func main() {
 				fmt.Println()
 			}
 			if strings.HasPrefix(evt, "crash:") {
-				fmt.Println(evt)
+				fmt.Printf("\033[31m%s\033[39m\n", evt)
 			}
 			fmt.Print(state)
 			lastState = state
