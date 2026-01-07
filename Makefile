@@ -6,11 +6,15 @@ test:
 	go test -v ./...
 
 release-patch: clean-git
+	go run ./_scripts/set_version.go $(shell svu patch)
+	git commit -m 'bump minor version' cmd/droopy/main.go
 	git tag $(shell svu patch)
 	git push
 	git push --tags
 
 release-minor: clean-git
+	go run ./_scripts/set_version.go $(shell svu minor)
+	git commit -m 'bump minor version' cmd/droopy/main.go
 	git tag $(shell svu minor)
 	git push
 	git push --tags
