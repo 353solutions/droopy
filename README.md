@@ -16,6 +16,8 @@ People can interact with Droppy by pressing buttons.
 - Un: Press up button on floor n
 - Dn: Press down button on floor n
 
+(See a button diagram [here](buttons.png))
+
 The controller connects to Droopy over TCP on port 10000.
 
 Droopy won't do anything when a button is pressed,
