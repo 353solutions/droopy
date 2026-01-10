@@ -67,10 +67,10 @@ You should write a controller program that runs that elevator and:
 
 You can get droopy from the [GitHub Release Section](https://github.com/353solutions/droopy/releases).
 
-Alternatively, you can install droopy with
+Alternatively, you can install droopy with the [GitHub CLI](https://cli.github.com/)
 
 ```
-go install github.com/353solutions/droopy/cmd/droopy@latest
+gh repo clone 353solutions/droopy
 ```
 
 [lifty]: https://github.com/dabeaz/lifty
