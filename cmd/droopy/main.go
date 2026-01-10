@@ -149,15 +149,23 @@ func (s DoorState) String() string {
 
 type Elevator struct {
 	// floors start at 1
-	panel     [MaxFloor + 1]bool // in car panel
-	up        [MaxFloor + 1]bool // up buttons on floors
-	down      [MaxFloor + 1]bool // down buttons on floors
-	floor     int                // Current floor, starts at 1
-	motor     MotorState
-	door      DoorState
-	stopping  bool
-	crashed   bool
-	eventTime int // Start of event such as door opening, move ...
+	panel      [MaxFloor + 1]bool // in car panel
+	up         [MaxFloor + 1]bool // up buttons on floors
+	down       [MaxFloor + 1]bool // down buttons on floors
+	floor      int                // Current floor, starts at 1
+	motor      MotorState
+	door       DoorState
+	stopping   bool
+	crashed    bool
+	crashCount int // Total crashes this session
+	eventTime  int // Start of event such as door opening, move ...
+}
+
+func (e *Elevator) crash() {
+	if !e.crashed {
+		e.crashed = true
+		e.crashCount++
+	}
 }
 
 func (e *Elevator) Reset() {
@@ -189,7 +197,7 @@ const (
 func (e *Elevator) setDoor(state DoorState) string {
 	switch {
 	case e.motor != MotorOff:
-		e.crashed = true
+		e.crash()
 		return "crash: door command while moving"
 	case e.door == DoorClosed && state == DoorOpening:
 		e.door = DoorOpening
@@ -201,24 +209,24 @@ func (e *Elevator) setDoor(state DoorState) string {
 		return ""
 	}
 
-	e.crashed = true
+	e.crash()
 	return fmt.Sprintf("crash: door %s in state %s", state, e.door)
 }
 
 // setMotor sets motor state, returns crash message.
 func (e *Elevator) setMotor(state MotorState) string {
 	if e.door != DoorClosed {
-		e.crashed = true
+		e.crash()
 		return fmt.Sprintf("crash: motor command while door %s", e.door)
 	}
 
 	if e.motor != MotorOff {
-		e.crashed = true
+		e.crash()
 		return fmt.Sprintln("crash: motor command while moving")
 	}
 
 	if e.motor == MotorOff && state == MotorOff {
-		e.crashed = true
+		e.crash()
 		return "crash: motor already off"
 	}
 
@@ -280,12 +288,12 @@ func (e *Elevator) Handle(cmd string) string {
 		return e.setMotor(MotorDown)
 	case "S":
 		if e.stopping {
-			e.crashed = true
+			e.crash()
 			return "crash: already stopping"
 		}
 
 		if e.motor == MotorOff {
-			e.crashed = true
+			e.crash()
 			return "crash: not moving"
 		}
 
@@ -314,12 +322,12 @@ func (e *Elevator) Handle(cmd string) string {
 			if e.eventTime == ticksPerFloor {
 				floor := nextFloor(e.floor, e.motor)
 				if floor > MaxFloor {
-					e.crashed = true
+					e.crash()
 					return "crash: out of the roof"
 				}
 
 				if floor < 1 {
-					e.crashed = true
+					e.crash()
 					return "crash: into the basement"
 				}
 
@@ -339,7 +347,7 @@ func (e *Elevator) Handle(cmd string) string {
 			}
 		}
 	default:
-		e.crashed = true
+		e.crash()
 		return fmt.Sprintf("crash: unknown command - %q", cmd)
 	}
 
@@ -438,6 +446,31 @@ func validateAddr(addr string) error {
 	return nil
 }
 
+func farewellMessage(crashCount int) string {
+	switch {
+	case crashCount == 0:
+		return "Perfect run! Not a single crash. You're going up in the world! 🎯"
+	case crashCount == 1:
+		return "Just 1 crash. Everyone makes mistakes on their first day. 🤕"
+	case crashCount <= 3:
+		return fmt.Sprintf("%d crashes. The elevator inspector wants a word with you. 📋", crashCount)
+	case crashCount <= 5:
+		return fmt.Sprintf("%d crashes. OSHA is preparing paperwork. 📝", crashCount)
+	case crashCount <= 10:
+		return fmt.Sprintf("%d crashes. The building is considering stairs only. 🚶", crashCount)
+	case crashCount <= 15:
+		return fmt.Sprintf("%d crashes. Your insurance premiums just went UP. 📈", crashCount)
+	case crashCount <= 20:
+		return fmt.Sprintf("%d crashes. NASA called - they need you to NOT work on rockets. 🚀❌", crashCount)
+	case crashCount <= 30:
+		return fmt.Sprintf("%d crashes. The passengers are forming a support group. 😰", crashCount)
+	case crashCount <= 50:
+		return fmt.Sprintf("%d crashes. The elevator is filing for emancipation. 🏃", crashCount)
+	default:
+		return fmt.Sprintf("%d crashes. At this point, it's impressive. Impressively bad. 💀", crashCount)
+	}
+}
+
 func main() {
 	flag.BoolVar(&showVersion, "version", false, "show version and exit")
 	flag.StringVar(&simAddr, "addr", simAddr, "simulator address")
@@ -471,6 +504,10 @@ func main() {
 
 	var e Elevator
 	e.Reset()
+	defer func() {
+		fmt.Println()
+		fmt.Println(farewellMessage(e.crashCount))
+	}()
 
 	lastState := e.String()
 	fmt.Print(lastState)
@@ -494,7 +531,7 @@ func main() {
 		case "H":
 			fmt.Println(help)
 		case "Q":
-			os.Exit(0)
+			return
 		default:
 			evt = e.Handle(msg.Payload)
 			if evt != "" && !strings.HasPrefix(evt, "crash:") {

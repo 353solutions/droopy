@@ -1,9 +1,13 @@
 package main
 
 import (
+	"context"
 	"fmt"
+	"os/exec"
+	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestElevator_setDoor(t *testing.T) {
@@ -197,4 +201,134 @@ func TestElevator_HandleClearButton(t *testing.T) {
 
 func TestElevator_HandleTick(t *testing.T) {
 	t.Skip("TODO")
+}
+
+func TestCrashCounter(t *testing.T) {
+	binaryPath := buildElevator(t)
+
+	tests := []struct {
+		name     string
+		input    string
+		expected []string
+	}{
+		{
+			name:  "zero crashes",
+			input: "Q\n",
+			expected: []string{
+				"Perfect run",
+				"You're going up in the world",
+				"🎯",
+			},
+		},
+		{
+			name:  "single crash",
+			input: "MU\nDO\nQ\n",
+			expected: []string{
+				"crash: door command while moving",
+				"Just 1 crash",
+				"first day",
+				"🤕",
+			},
+		},
+		{
+			name:  "multiple crashes with resets",
+			input: "MU\nDO\nR\nMU\nDO\nR\nMU\nDO\nR\nMU\nDO\nQ\n",
+			expected: []string{
+				"4 crashes",
+				"OSHA",
+				"📝",
+			},
+		},
+		{
+			name:  "blocked commands don't increment",
+			input: "MU\nDO\nDO\nDO\nQ\n",
+			expected: []string{
+				"Just 1 crash",
+			},
+		},
+		{
+			name:  "EOF exit",
+			input: "MU\nDO\n",
+			expected: []string{
+				"Just 1 crash",
+			},
+		},
+		{
+			name:  "three crashes",
+			input: "MU\nDO\nR\nMU\nDO\nR\nMU\nDO\nQ\n",
+			expected: []string{
+				"3 crashes",
+				"inspector",
+				"📋",
+			},
+		},
+		{
+			name:  "five crashes",
+			input: "MU\nDO\nR\nMU\nDO\nR\nMU\nDO\nR\nMU\nDO\nR\nMU\nDO\nQ\n",
+			expected: []string{
+				"5 crashes",
+				"OSHA",
+			},
+		},
+		{
+			name:  "eleven crashes",
+			input: strings.Repeat("MU\nDO\nR\n", 11) + "Q\n",
+			expected: []string{
+				"11 crashes",
+				"insurance premiums",
+				"UP",
+				"📈",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			output := runElevator(t, binaryPath, tt.input)
+
+			for _, want := range tt.expected {
+				if !strings.Contains(output, want) {
+					t.Errorf("expected %q in output:\n%s", want, output)
+				}
+			}
+		})
+	}
+}
+
+func buildElevator(t *testing.T) string {
+	t.Helper()
+
+	binaryPath := filepath.Join(t.TempDir(), "droopy-test")
+	cmd := exec.Command("go", "build", "-o", binaryPath, ".")
+	if err := cmd.Run(); err != nil {
+		t.Fatalf("failed to build: %v", err)
+	}
+
+	return binaryPath
+}
+
+func runElevator(t *testing.T, binaryPath, stdin string) string {
+	t.Helper()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	cmd := exec.CommandContext(ctx, binaryPath)
+	cmd.Stdin = strings.NewReader(stdin)
+
+	t.Cleanup(func() {
+		if cmd.Process != nil {
+			cmd.Process.Kill()
+		}
+	})
+
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		if ctx.Err() == context.DeadlineExceeded {
+			t.Fatalf("command timed out: %v", err)
+		}
+		t.Logf("command exited with error: %v", err)
+	}
+
+	return string(output)
 }
