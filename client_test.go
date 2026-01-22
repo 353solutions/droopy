@@ -67,7 +67,7 @@ func TestClient(t *testing.T) {
 	startElevator(t, addr)
 
 	// Create client
-	c, err := NewClient("localhost" + addr)
+	c, err := NewClient(WithAddr("localhost" + addr))
 	if err != nil {
 		t.Fatalf("failed to create client: %v", err)
 	}

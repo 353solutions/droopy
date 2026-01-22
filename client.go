@@ -12,9 +12,31 @@ type Client struct {
 	scan *bufio.Scanner
 }
 
-// NewClient return new client connected to simulator at `addr`.
-func NewClient(addr string) (*Client, error) {
-	conn, err := net.Dial("tcp", addr)
+type options struct {
+	addr string
+}
+
+// ClientOption is a function that configures a Client.
+type ClientOption func(*options)
+
+// WithAddr sets the server address for the client.
+func WithAddr(addr string) ClientOption {
+	return func(o *options) {
+		o.addr = addr
+	}
+}
+
+// NewClient return new client connected to simulator.
+func NewClient(opts ...ClientOption) (*Client, error) {
+	o := options{
+		addr: "localhost:10000",
+	}
+
+	for _, opt := range opts {
+		opt(&o)
+	}
+
+	conn, err := net.Dial("tcp", o.addr)
 	if err != nil {
 		return nil, err
 	}

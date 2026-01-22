@@ -14,27 +14,10 @@ import (
 	"path"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 )
 
-// There only one controller connection at a time
-var mu sync.Mutex
-var ctrlConn net.Conn
-
-func getCtrlConn() net.Conn {
-	mu.Lock()
-	defer mu.Unlock()
-
-	return ctrlConn
-}
-
-func setCtrlConn(conn net.Conn) {
-	mu.Lock()
-	defer mu.Unlock()
-
-	ctrlConn = conn
-}
+var pool *ConnPool
 
 func sockListener(addr string, ch chan<- Message) {
 	lis, err := net.Listen("tcp", addr)
@@ -47,13 +30,15 @@ func sockListener(addr string, ch chan<- Message) {
 		if err != nil {
 			panic(err)
 		}
-		setCtrlConn(conn)
-		// We assume single connection from controller
-		handler(conn, ch)
+		pool.Add(conn)
+		go handler(conn, ch)
 	}
 }
 
 func handler(conn net.Conn, ch chan<- Message) {
+	defer pool.Remove(conn)
+	defer conn.Close()
+
 	s := bufio.NewScanner(conn)
 	for s.Scan() {
 		ch <- Message{"ctrl", s.Text()}
@@ -62,18 +47,10 @@ func handler(conn net.Conn, ch chan<- Message) {
 	if err := s.Err(); err != nil && !errors.Is(err, io.EOF) {
 		panic(err)
 	}
-
-	setCtrlConn(nil)
 }
 
-func sendEvent(msg string) error {
-	conn := getCtrlConn()
-	if conn == nil {
-		return nil
-	}
-
-	_, err := fmt.Fprintf(conn, "%s\n", msg)
-	return err
+func sendEvent(msg string) {
+	pool.Broadcast(msg)
 }
 
 func stdinListener(ch chan<- Message) {
@@ -389,8 +366,9 @@ func buttonsStr(buttons []bool) string {
 
 func (e *Elevator) String() string {
 	var buf bytes.Buffer
+	count := pool.Len()
 	conn := " "
-	if getCtrlConn() != nil {
+	if count > 0 {
 		conn = "*"
 	}
 
@@ -471,7 +449,9 @@ func farewellMessage(crashCount int) string {
 	}
 }
 
-func main() {
+func runCmd() {
+	pool = NewConnPool()
+
 	flag.BoolVar(&showVersion, "version", false, "show version and exit")
 	flag.StringVar(&simAddr, "addr", simAddr, "simulator address")
 	flag.Usage = func() {
@@ -552,4 +532,16 @@ func main() {
 			lastState = state
 		}
 	}
+}
+
+func main() {
+	if len(os.Args) > 1 && os.Args[1] == "play" {
+		if err := playCmd(os.Args[2:]); err != nil {
+			fmt.Fprintf(os.Stderr, "error: %s\n", err)
+			os.Exit(1)
+		}
+		return
+	}
+
+	runCmd()
 }
