@@ -10,7 +10,7 @@ version: 2
 
 builds:
   - id: droopy
-    main: ./cmd/droopy/main.go
+    main: ./cmd/droopy
     binary: droopy
     env:
       - CGO_ENABLED=0
