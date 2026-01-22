@@ -398,7 +398,7 @@ func sigHandler(ch chan<- Message) {
 }
 
 var (
-	version     string = "v0.10.0" // filled by goreleaser
+	version     string = "v0.11.0" // filled by goreleaser
 	showVersion bool
 	simAddr     = ":10000"
 
