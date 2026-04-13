@@ -12,7 +12,6 @@ import (
 	"os"
 	"os/signal"
 	"path"
-	"strconv"
 	"strings"
 	"time"
 )
@@ -398,30 +397,15 @@ func sigHandler(ch chan<- Message) {
 }
 
 var (
-	version     string = "v0.11.1" // filled by goreleaser
-	showVersion bool
-	simAddr     = ":10000"
+	version string = "v0.11.1" // filled by goreleaser
 
 	//go:embed help.txt
 	help string
 )
 
 func validateAddr(addr string) error {
-	i := strings.Index(addr, ":")
-	if i == -1 {
-		return fmt.Errorf("%q: missing ':'", addr)
-	}
-
-	port, err := strconv.Atoi(addr[i+1:])
-	if err != nil {
-		return fmt.Errorf("%q: bad port - %w", addr, err)
-	}
-
-	if port < 0 || port > 65_535 {
-		return fmt.Errorf("%q: bad port number", addr)
-	}
-
-	return nil
+	_, err := net.ResolveTCPAddr("tcp", addr)
+	return err
 }
 
 func farewellMessage(crashCount int) string {
@@ -449,35 +433,55 @@ func farewellMessage(crashCount int) string {
 	}
 }
 
-func runCmd() {
-	pool = NewConnPool()
+var options struct {
+	addr    string
+	version bool
+	play    bool
+}
 
-	flag.BoolVar(&showVersion, "version", false, "show version and exit")
-	flag.StringVar(&simAddr, "addr", simAddr, "simulator address")
+func main() {
+	flag.BoolVar(&options.version, "version", false, "show version and exit")
+	flag.StringVar(&options.addr, "addr", ":10000", "simulator address")
+	flag.BoolVar(&options.play, "play", false, "play commands from file")
+
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "usage: %s [options]\n", path.Base(os.Args[0]))
 		fmt.Println("Options:")
 		flag.PrintDefaults()
-		fmt.Println()
-		fmt.Println(help)
+		fmt.Println("\n--play commands (read from stdin):")
+		fmt.Println("  SEND <cmd>       - send command to the simulator")
+		fmt.Println("  SLEEP <duration> - sleep for duration (e.g., 3s, 100ms)")
+		fmt.Println("  WAIT <event>     - wait for event (e.g., A2, O1)")
 	}
+
 	flag.Parse()
 
-	if showVersion {
+	if options.version {
 		fmt.Printf("%s version %s\n", path.Base(os.Args[0]), version)
 		os.Exit(0)
 	}
 
-	if err := validateAddr(simAddr); err != nil {
+	if err := validateAddr(options.addr); err != nil {
 		fmt.Fprintf(os.Stderr, "error: %s\n", err)
 		os.Exit(1)
 	}
 
-	debug("address: %s\n", simAddr)
+	if options.play {
+		if err := playCmd(options.addr); err != nil {
+			fmt.Fprintf(os.Stderr, "error: %s\n", err)
+			os.Exit(1)
+		}
+
+		return
+	}
+
+	pool = NewConnPool()
+
+	debug("address: %s\n", options.addr)
 
 	ch := make(chan Message)
 
-	go sockListener(simAddr, ch)
+	go sockListener(options.addr, ch)
 	go stdinListener(ch)
 	go sigHandler(ch)
 	go ticker(ch)
@@ -532,16 +536,4 @@ func runCmd() {
 			lastState = state
 		}
 	}
-}
-
-func main() {
-	if len(os.Args) > 1 && os.Args[1] == "play" {
-		if err := playCmd(os.Args[2:]); err != nil {
-			fmt.Fprintf(os.Stderr, "error: %s\n", err)
-			os.Exit(1)
-		}
-		return
-	}
-
-	runCmd()
 }

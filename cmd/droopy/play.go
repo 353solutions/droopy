@@ -2,7 +2,6 @@ package main
 
 import (
 	"bufio"
-	"flag"
 	"fmt"
 	"os"
 	"strings"
@@ -11,25 +10,7 @@ import (
 	"github.com/353solutions/droopy"
 )
 
-func playCmd(args []string) error {
-	fs := flag.NewFlagSet("play", flag.ExitOnError)
-	var addr string
-	fs.StringVar(&addr, "addr", ":10000", "simulator address")
-	fs.Usage = func() {
-		fmt.Fprintf(os.Stderr, "usage: droopy play [options]\n")
-		fmt.Println("Options:")
-		fs.PrintDefaults()
-		fmt.Println()
-		fmt.Println("Commands (read from stdin):")
-		fmt.Println("  SEND <cmd>       - send command to the simulator")
-		fmt.Println("  SLEEP <duration> - sleep for duration (e.g., 3s, 100ms)")
-		fmt.Println("  WAIT <event>     - wait for event (e.g., A2, O1)")
-	}
-
-	if err := fs.Parse(args); err != nil {
-		return err
-	}
-
+func playCmd(addr string) error {
 	client, err := droopy.NewClient(droopy.WithAddr(addr))
 	if err != nil {
 		return fmt.Errorf("connecting to simulator: %w", err)
