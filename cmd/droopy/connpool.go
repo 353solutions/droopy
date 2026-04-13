@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 	"sync"
+	"time"
 )
 
 type ConnPool struct {
@@ -37,18 +38,39 @@ func (p *ConnPool) Len() int {
 
 func (p *ConnPool) Broadcast(msg string) {
 	p.mu.Lock()
-	defer p.mu.Unlock()
-
-	var toRemove []net.Conn
+	conns := make([]net.Conn, 0, len(p.conns))
 	for conn := range p.conns {
-		_, err := fmt.Fprintf(conn, "%s\n", msg)
-		if err != nil {
-			toRemove = append(toRemove, conn)
-		}
+		conns = append(conns, conn)
+	}
+	p.mu.Unlock()
+
+	var (
+		mu       sync.Mutex
+		toRemove []net.Conn
+		wg       sync.WaitGroup
+	)
+
+	for _, conn := range conns {
+		wg.Add(1)
+		go func(c net.Conn) {
+			defer wg.Done()
+			c.SetWriteDeadline(time.Now().Add(3 * time.Second))
+			_, err := fmt.Fprintf(c, "%s\n", msg)
+			c.SetWriteDeadline(time.Time{})
+			if err != nil {
+				mu.Lock()
+				toRemove = append(toRemove, c)
+				mu.Unlock()
+			}
+		}(conn)
 	}
 
+	wg.Wait()
+
+	p.mu.Lock()
 	for _, conn := range toRemove {
 		delete(p.conns, conn)
 		_ = conn.Close()
 	}
+	p.mu.Unlock()
 }
