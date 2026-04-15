@@ -397,7 +397,7 @@ func sigHandler(ch chan<- Message) {
 }
 
 var (
-	version     string = "v0.12.2" // filled by goreleaser
+	version string = "v0.12.2" // filled by goreleaser
 
 	//go:embed help.txt
 	help string
@@ -439,19 +439,23 @@ var options struct {
 	play    bool
 }
 
+var playHelp = `play commands from standard input. 
+Commands:
+SEND <cmd>       - send command to the simulator
+SLEEP <duration> - sleep for duration (e.g., 3s, 100ms)
+WAIT <event>     - wait for event (e.g., A2, O1)
+
+Empty lines and lines starting with # are ignored.`
+
 func main() {
 	flag.BoolVar(&options.version, "version", false, "show version and exit")
 	flag.StringVar(&options.addr, "addr", ":10000", "simulator address")
-	flag.BoolVar(&options.play, "play", false, "play commands from file")
+	flag.BoolVar(&options.play, "play", false, playHelp)
 
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "usage: %s [options]\n", path.Base(os.Args[0]))
 		fmt.Println("Options:")
 		flag.PrintDefaults()
-		fmt.Println("\n--play commands (read from stdin):")
-		fmt.Println("  SEND <cmd>       - send command to the simulator")
-		fmt.Println("  SLEEP <duration> - sleep for duration (e.g., 3s, 100ms)")
-		fmt.Println("  WAIT <event>     - wait for event (e.g., A2, O1)")
 	}
 
 	flag.Parse()
