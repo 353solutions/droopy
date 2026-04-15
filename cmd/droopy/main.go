@@ -531,7 +531,7 @@ func main() {
 		}
 
 		state := e.String()
-		if state != lastState || msg.Payload == "" || msg.Payload == "H" { // Empty message -> user hit Enter
+		if state != lastState || msg.Origin == "stdin" {
 			if msg.Origin != "stdin" || msg.Origin == "ctrl" {
 				fmt.Println()
 			}
