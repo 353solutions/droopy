@@ -399,7 +399,7 @@ func sigHandler(ch chan<- Message) {
 }
 
 var (
-	version string = "v0.12.2" // filled by goreleaser
+	version     string = "v0.12.3" // filled by goreleaser
 
 	//go:embed help.txt
 	help string
