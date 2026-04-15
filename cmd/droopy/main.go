@@ -319,7 +319,9 @@ func (e *Elevator) Handle(cmd string) string {
 
 			if e.eventTime == ticksPerFloor-approachTicks {
 				floor := nextFloor(e.floor, e.motor)
-				return fmt.Sprintf("A%d", floor)
+				if floor >= 1 && floor <= MaxFloor {
+					return fmt.Sprintf("A%d", floor)
+				}
 			}
 		}
 	default:
