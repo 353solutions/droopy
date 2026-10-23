@@ -11,18 +11,18 @@ Droopy resides in a 4-floor building. It has the following hardware:
 - Up and down buttons at each floor
 - A motor that can go up and down
 
-People can interact with Droppy by pressing buttons.
+People can interact with Droopy by pressing buttons.
 - Pn: Press button for floor n inside the car
-- Un: Press up button on floor n
-- Dn: Press down button on floor n
+- Un: Press up button on floor n (n is 1-3)
+- Dn: Press down button on floor n (n is 2-4)
 
 (See a button diagram [here](buttons.png))
 
 The controller connects to Droopy over TCP on port 10000.
 
 Droopy won't do anything when a button is pressed,
-it'll notify the controller via TCP socket on that a button was pressed.
-The controller can send command telling Droopy what to do.
+it'll notify the controller via TCP socket that a button was pressed.
+The controller can send commands telling Droopy what to do.
 
 
 ```
@@ -37,13 +37,16 @@ Events from Droopy to the controller:
 
 - Pn: Panel button for floor n was pressed
 - Un: Up button on floor n was pressed
-- Dn: Down button floor n was pressed
+- Dn: Down button on floor n was pressed
 - An: Approaching floor n (still in motion)
 - Sn: Stopped at floor n (safe to open door)
 - On: Door open on floor n (doors have fully opened)
 - Cn: Door closed on floor n (now safe to move)
+- CPn: Panel button n was cleared
+- CUn: Up button on floor n was cleared
+- CDn: Down button on floor n was cleared
 
-Command from the controller to Droopy:
+Commands from the controller to Droopy:
 
 - MU: Start moving up
 - MD: Start moving down
@@ -54,11 +57,14 @@ Command from the controller to Droopy:
 - CUn: Clear up button n
 - CDn: Clear down button n
 - R: Reset
+
+Commands you can type in the Droopy terminal (not from the controller):
+
 - H: Print this help
 - Q: Quit
 
 If the controller sends Droopy an unsafe state (say open door when moving),
-Droopy moves into a crashed state and stop responding to any commands.
+Droopy moves into a crashed state and stops responding to any commands.
 You can reset Droopy by entering the "R" (reset) command.
 
 You should write a controller program that runs that elevator and:

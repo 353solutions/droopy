@@ -504,19 +504,20 @@ func main() {
 			debug("%-5s: %s\n", msg.Origin, msg.Payload)
 		}
 
-		if msg.Payload == "EOF" || msg.Payload == "Q" {
+		isCtrl := msg.Origin == "ctrl"
+		if !isCtrl && (msg.Payload == "EOF" || msg.Payload == "Q") {
 			return
 		}
 
-		if msg.Origin == "ctrl" {
+		if isCtrl {
 			debug("c:%s", msg.Payload)
 		}
 
 		var evt string
-		switch msg.Payload {
-		case "":
+		switch {
+		case msg.Payload == "":
 			// Ignore user hitting Enter
-		case "H":
+		case msg.Payload == "H" && !isCtrl:
 			fmt.Println(help)
 		default:
 			evt = e.Handle(msg.Payload)

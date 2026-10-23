@@ -3,8 +3,10 @@ package main
 import (
 	"context"
 	"fmt"
+	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -352,4 +354,27 @@ func runElevator(t *testing.T, binaryPath, stdin string) string {
 	}
 
 	return string(output)
+}
+
+func listItems(text string) []string {
+	var items []string
+	for _, line := range strings.Split(text, "\n") {
+		if strings.HasPrefix(line, "- ") {
+			items = append(items, strings.TrimSpace(line))
+		}
+	}
+
+	return items
+}
+
+func TestHelpInSyncWithREADME(t *testing.T) {
+	data, err := os.ReadFile("../../README.md")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	helpItems, readmeItems := listItems(help), listItems(string(data))
+	if !slices.Equal(helpItems, readmeItems) {
+		t.Fatalf("help.txt and README.md lists differ:\nhelp:   %q\nreadme: %q", helpItems, readmeItems)
+	}
 }
