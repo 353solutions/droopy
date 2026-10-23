@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net"
 	"os/exec"
@@ -152,7 +153,7 @@ WAIT A2`,
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			ctx, cancel := context.WithTimeout(t.Context(), 5*time.Second)
 			defer cancel()
 
 			cmd := exec.CommandContext(ctx, binPath, "-play", "-addr", "localhost"+addr)
@@ -160,7 +161,7 @@ WAIT A2`,
 
 			output, err := cmd.CombinedOutput()
 			if err != nil {
-				if ctx.Err() == context.DeadlineExceeded {
+				if errors.Is(ctx.Err(), context.DeadlineExceeded) {
 					t.Fatalf("command timed out: %v\nOutput:\n%s", err, output)
 				}
 			}
@@ -222,7 +223,7 @@ func TestPlayCmd_Errors(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			ctx, cancel := context.WithTimeout(t.Context(), 5*time.Second)
 			defer cancel()
 
 			cmd := exec.CommandContext(ctx, binPath, "-play", "-addr", "localhost"+addr)

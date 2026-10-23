@@ -12,6 +12,7 @@ import (
 	"os"
 	"os/signal"
 	"path"
+	rdebug "runtime/debug"
 	"strings"
 	"time"
 )
@@ -386,12 +387,17 @@ func sigHandler(ch chan<- Message) {
 	ch <- Message{"signal", "Q"}
 }
 
-var (
-	version     string = "v0.12.5" // filled by goreleaser
+//go:embed help.txt
+var help string
 
-	//go:embed help.txt
-	help string
-)
+func version() string {
+	info, ok := rdebug.ReadBuildInfo()
+	if !ok {
+		return "(unknown)"
+	}
+
+	return info.Main.Version
+}
 
 func isTTY(f *os.File) bool {
 	info, err := f.Stat()
@@ -460,7 +466,7 @@ func main() {
 	flag.Parse()
 
 	if options.version {
-		fmt.Printf("%s version %s\n", path.Base(os.Args[0]), version)
+		fmt.Printf("%s version %s\n", path.Base(os.Args[0]), version())
 		os.Exit(0)
 	}
 

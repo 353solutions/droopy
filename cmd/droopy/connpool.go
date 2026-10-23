@@ -2,7 +2,9 @@ package main
 
 import (
 	"fmt"
+	"maps"
 	"net"
+	"slices"
 	"sync"
 	"time"
 )
@@ -38,10 +40,7 @@ func (p *ConnPool) Len() int {
 
 func (p *ConnPool) Broadcast(msg string) {
 	p.mu.Lock()
-	conns := make([]net.Conn, 0, len(p.conns))
-	for conn := range p.conns {
-		conns = append(conns, conn)
-	}
+	conns := slices.Collect(maps.Keys(p.conns))
 	p.mu.Unlock()
 
 	var (
@@ -51,18 +50,16 @@ func (p *ConnPool) Broadcast(msg string) {
 	)
 
 	for _, conn := range conns {
-		wg.Add(1)
-		go func(c net.Conn) {
-			defer wg.Done()
-			c.SetWriteDeadline(time.Now().Add(3 * time.Second))
-			_, err := fmt.Fprintf(c, "%s\n", msg)
-			c.SetWriteDeadline(time.Time{})
+		wg.Go(func() {
+			conn.SetWriteDeadline(time.Now().Add(3 * time.Second))
+			_, err := fmt.Fprintf(conn, "%s\n", msg)
+			conn.SetWriteDeadline(time.Time{})
 			if err != nil {
 				mu.Lock()
-				toRemove = append(toRemove, c)
+				toRemove = append(toRemove, conn)
 				mu.Unlock()
 			}
-		}(conn)
+		})
 	}
 
 	wg.Wait()

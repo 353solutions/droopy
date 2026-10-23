@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -96,7 +97,7 @@ func TestElevator_setMotor(t *testing.T) {
 	}
 }
 
-func TestElevetor_HandleButton(t *testing.T) {
+func TestElevator_HandleButton(t *testing.T) {
 	var e Elevator
 
 	var cases = []struct {
@@ -333,7 +334,7 @@ func buildElevator(t *testing.T) string {
 func runElevator(t *testing.T, binaryPath, stdin string) string {
 	t.Helper()
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(t.Context(), 5*time.Second)
 	defer cancel()
 
 	cmd := exec.CommandContext(ctx, binaryPath)
@@ -347,7 +348,7 @@ func runElevator(t *testing.T, binaryPath, stdin string) string {
 
 	output, err := cmd.CombinedOutput()
 	if err != nil {
-		if ctx.Err() == context.DeadlineExceeded {
+		if errors.Is(ctx.Err(), context.DeadlineExceeded) {
 			t.Fatalf("command timed out: %v", err)
 		}
 		t.Logf("command exited with error: %v", err)
@@ -358,7 +359,7 @@ func runElevator(t *testing.T, binaryPath, stdin string) string {
 
 func listItems(text string) []string {
 	var items []string
-	for _, line := range strings.Split(text, "\n") {
+	for line := range strings.Lines(text) {
 		if strings.HasPrefix(line, "- ") {
 			items = append(items, strings.TrimSpace(line))
 		}

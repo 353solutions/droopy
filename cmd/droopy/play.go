@@ -28,10 +28,6 @@ func playCmd(addr string) error {
 		}
 
 		parts := strings.Fields(line)
-		if len(parts) == 0 {
-			continue
-		}
-
 		fmt.Printf("> %s\n", line)
 
 		cmd := parts[0]
