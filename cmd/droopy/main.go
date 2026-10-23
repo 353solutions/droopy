@@ -145,22 +145,7 @@ func (e *Elevator) crash() {
 }
 
 func (e *Elevator) Reset() {
-	for i := range e.panel {
-		e.panel[i] = false
-	}
-
-	for i := range e.up {
-		e.up[i] = false
-	}
-
-	for i := range e.down {
-		e.down[i] = false
-	}
-
-	e.floor = 1
-	e.motor = MotorOff
-	e.door = DoorClosed
-	e.crashed = false
+	*e = Elevator{floor: 1, motor: MotorOff, door: DoorClosed, crashCount: e.crashCount}
 }
 
 const (
@@ -198,7 +183,7 @@ func (e *Elevator) setMotor(state MotorState) string {
 
 	if e.motor != MotorOff {
 		e.crash()
-		return fmt.Sprintln("crash: motor command while moving")
+		return "crash: motor command while moving"
 	}
 
 	if e.motor == MotorOff && state == MotorOff {
@@ -217,6 +202,10 @@ func nextFloor(floor int, motor MotorState) int {
 	}
 
 	return floor - 1
+}
+
+func validFloor(floor int) bool {
+	return floor >= 1 && floor <= MaxFloor
 }
 
 func cmdFloor(cmd string) int {
@@ -297,13 +286,12 @@ func (e *Elevator) Handle(cmd string) string {
 		if e.motor == MotorUp || e.motor == MotorDown {
 			if e.eventTime == ticksPerFloor {
 				floor := nextFloor(e.floor, e.motor)
-				if floor > MaxFloor {
+				if !validFloor(floor) {
 					e.crash()
-					return "crash: out of the roof"
-				}
+					if floor > MaxFloor {
+						return "crash: out of the roof"
+					}
 
-				if floor < 1 {
-					e.crash()
 					return "crash: into the basement"
 				}
 
@@ -319,7 +307,7 @@ func (e *Elevator) Handle(cmd string) string {
 
 			if e.eventTime == ticksPerFloor-approachTicks {
 				floor := nextFloor(e.floor, e.motor)
-				if floor >= 1 && floor <= MaxFloor {
+				if validFloor(floor) {
 					return fmt.Sprintf("A%d", floor)
 				}
 			}
@@ -404,6 +392,15 @@ var (
 	//go:embed help.txt
 	help string
 )
+
+func isTTY(f *os.File) bool {
+	info, err := f.Stat()
+	if err != nil {
+		return false
+	}
+
+	return info.Mode()&os.ModeCharDevice != 0
+}
 
 func validateAddr(addr string) error {
 	_, err := net.ResolveTCPAddr("tcp", addr)
@@ -499,6 +496,7 @@ func main() {
 		fmt.Println(farewellMessage(e.crashCount))
 	}()
 
+	tty := isTTY(os.Stdout)
 	lastState := e.String()
 	fmt.Print(lastState)
 	for msg := range ch {
@@ -520,8 +518,6 @@ func main() {
 			// Ignore user hitting Enter
 		case "H":
 			fmt.Println(help)
-		case "Q":
-			return
 		default:
 			evt = e.Handle(msg.Payload)
 			if evt != "" && !strings.HasPrefix(evt, "crash:") {
@@ -531,15 +527,23 @@ func main() {
 		}
 
 		state := e.String()
-		if state != lastState || msg.Origin == "stdin" {
-			if msg.Origin != "stdin" || msg.Origin == "ctrl" {
-				fmt.Println()
-			}
-			if strings.HasPrefix(evt, "crash:") {
-				fmt.Printf("\033[31m%s\033[39m\n", evt)
-			}
-			fmt.Print(state)
-			lastState = state
+		if state == lastState && msg.Origin != "stdin" && msg.Payload != "H" {
+			continue
 		}
+
+		if msg.Origin != "stdin" {
+			fmt.Println()
+		}
+
+		if strings.HasPrefix(evt, "crash:") {
+			if tty {
+				fmt.Printf("\033[31m%s\033[39m\n", evt)
+			} else {
+				fmt.Println(evt)
+			}
+		}
+
+		fmt.Print(state)
+		lastState = state
 	}
 }

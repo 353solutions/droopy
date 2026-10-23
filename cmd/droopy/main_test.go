@@ -151,6 +151,27 @@ func TestElevator_HandleStop(t *testing.T) {
 	}
 }
 
+func TestElevator_ResetWhileStopping(t *testing.T) {
+	var e Elevator
+	e.Reset()
+
+	for _, cmd := range []string{"MU", "S", "R"} {
+		if msg := e.Handle(cmd); msg != "" {
+			t.Fatalf("%s: %s", cmd, msg)
+		}
+	}
+
+	if s := e.statusStr(); s != "CLOSED" {
+		t.Fatalf("status after reset: %s", s)
+	}
+
+	for _, cmd := range []string{"MU", "S"} {
+		if msg := e.Handle(cmd); msg != "" {
+			t.Fatalf("%s: %s", cmd, msg)
+		}
+	}
+}
+
 func TestElevator_HandleClearButton(t *testing.T) {
 	var e Elevator
 
